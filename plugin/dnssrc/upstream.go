@@ -32,7 +32,7 @@ type reloadableUpstream struct {
 	ipset     interface{}
 	pf        interface{}
 	noIPv6    bool
-	debug bool
+	debug     bool
 }
 
 // reloadableUpstream implements Upstream interface
@@ -62,9 +62,6 @@ func (u *reloadableUpstream) Match(addr string) bool {
 func (u *reloadableUpstream) Start() error {
 	u.periodicUpdate(u.bootstrap)
 	u.HealthCheck.Start()
-	if err := ipsetSetup(u); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -72,9 +69,6 @@ func (u *reloadableUpstream) Stop() error {
 	close(u.stopPathReload)
 	close(u.stopUrlReload)
 	u.HealthCheck.Stop()
-	if err := ipsetShutdown(u); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -188,9 +182,8 @@ func newReloadableUpstream(c *caddy.Controller) (Upstream, error) {
 		}
 	}
 
-
 	if u.matchAny {
-		if len(u.inline )!= 0 {
+		if len(u.inline) != 0 {
 			return nil, c.Errf("INLINE %q is forbidden since %q will match all requests", u.inline, ".")
 		}
 		if u.pathReload != 0 {
@@ -295,7 +288,7 @@ func parseBlock(c *caddy.Controller, u *reloadableUpstream) error {
 			return c.ArgErr()
 		}
 		for _, addr := range args {
-			inet,err := netutils.ParseIpNet(addr)
+			inet, err := netutils.ParseIpNet(addr)
 			if err != nil {
 				log.Warningf("%q isn't a ip addr/cidr", addr)
 			}
@@ -388,10 +381,6 @@ func parseBlock(c *caddy.Controller, u *reloadableUpstream) error {
 		if err := parseBootstrap(c, u); err != nil {
 			return err
 		}
-	case "ipset":
-		if err := ipsetParse(c, u); err != nil {
-			return err
-		}
 	case "no_ipv6":
 		args := c.RemainingArgs()
 		if len(args) != 0 {
@@ -403,13 +392,13 @@ func parseBlock(c *caddy.Controller, u *reloadableUpstream) error {
 		u.debug = true
 	default:
 		if len(c.RemainingArgs()) != 0 {
-			inet,err := netutils.ParseIpNet(dir)
+			inet, err := netutils.ParseIpNet(dir)
 			if err != nil {
 				return c.Errf("unknown property: %q", dir)
 			}
 			u.ignored = append(u.ignored, inet)
 		}
-		if len( u.ignored)!= 0 {
+		if len(u.ignored) != 0 {
 			return c.Errf("%q must comes before %q", "INLINE", "except")
 		}
 	}

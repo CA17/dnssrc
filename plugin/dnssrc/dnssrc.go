@@ -18,7 +18,7 @@ import (
 var log = clog.NewWithPlugin(pluginName)
 
 type Dnsredir struct {
-	Next  plugin.Handler
+	Next plugin.Handler
 
 	Upstreams *[]Upstream
 }
@@ -114,9 +114,6 @@ func (r *Dnsredir) ServeDNS(ctx context.Context, w dns.ResponseWriter, req *dns.
 			return dns.RcodeSuccess, nil
 		}
 
-		// Add resolved IPs to ipset/pf before write response to DNS resolver
-		// 	thus the rule based routing can take effect immediately
-		ipsetAddIP(upstream, reply)
 		_ = w.WriteMsg(reply)
 
 		RequestDuration.WithLabelValues(server, host.Name()).Observe(float64(time.Since(start).Milliseconds()))
